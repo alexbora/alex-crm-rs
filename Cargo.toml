@@ -1,0 +1,27 @@
+[package]
+name = "alex-crm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# UI: Native FLTK Rust bindings
+fltk = "1.4"
+
+# Database: SQLite with bundled compilation (no external deps needed)
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# Concurrency: Lock-free single-producer-single-consumer channels
+# Comment: crossbeam provides proven, efficient SPSC implementation
+crossbeam = "0.8"
+
+# Dates and time utilities for logging timestamps
+chrono = "0.4"
+
+# Serialization (for future IPC/state serialization)
+serde = { version = "1.0", features = ["derive"] }
+
+[profile.release]
+# Comment: Aggressive optimization for release builds
+opt-level = 3
+lto = true
+codegen-units = 1
