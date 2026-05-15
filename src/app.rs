@@ -2,6 +2,7 @@ use crate::policies::{LoggingPolicy, RetryPolicy};
 use crate::state::AppState;
 use crate::tasks::{DbTask, FetchCompaniesReq, UiTask};
 use crate::ui::{companies_tab, detail_window, main_window};
+use fltk::prelude::{InputExt, WidgetExt};
 use std::sync::Arc;
 
 pub struct App<L: LoggingPolicy, R: RetryPolicy> {

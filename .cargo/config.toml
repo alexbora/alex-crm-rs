@@ -1,0 +1,11 @@
+[http]
+check-revoke = false
+
+[target.x86_64-pc-windows-gnu]
+rustflags = ["-C", "link-args=-lstdc++ -lucrtbase"]
+
+[env]
+CMAKE_GENERATOR = "MinGW Makefiles"
+
+[build]
+target = "x86_64-pc-windows-gnu"
