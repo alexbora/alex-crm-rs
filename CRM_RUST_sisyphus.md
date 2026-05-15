@@ -148,3 +148,28 @@ cargo build --release
 *   **Configuration:** Externalize hardcoded database paths and backup intervals.
 *   **Testing:** Expand from policy unit tests to `DbWorker` integration tests.
 
+---
+
+## 10. Automation Audit (May 2026)
+
+### **Current Surface**
+- **Scheduled Database Backup:** Background thread (`BackupWorker`) performs file-copy backups every 300 seconds.
+- **Manual Backup Trigger:** UI-driven request to the backup worker via `BackupCommand::RunNow`.
+- **Build & Test Cycle:** Standard `cargo` toolchain orchestration (Build/Run/Test).
+- **Dynamic Policy Injection:** Trait-based logging and retry logic injected at the composition root (`App<L, R>`).
+
+### **Key Findings**
+- **Stale Documentation:** `README.md` overlaps with this document, creating potential for truth drift.
+- **Missing CI/CD:** No automated verification (GitHub Actions) for build or test health.
+- **Missing Hooks:** No pre-commit automation for code formatting (`cargo fmt`) or linting.
+- **Ambiguous Validation:** Build/test status in the current environment is not recently verified by an agent.
+
+### **Recommendations**
+- **Keep:** `BackupWorker` and Policy Injection architecture.
+- **Merge:** Consolidate any unique `README.md` content into this document; repurpose README as a high-level entry point.
+- **Cut:** Deprecate `plan-archive/` to prevent agent confusion.
+- **Fix Next:** 
+    1. **Verification Loop:** Run `cargo build` and `cargo test` to prove current project health.
+    2. **Infrastructure:** Create `.github/workflows/rust.yml` for automated CI.
+    3. **Hooks:** Implement local pre-commit hooks for style consistency.
+
