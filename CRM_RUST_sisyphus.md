@@ -128,3 +128,23 @@ cargo build --release
 1. Any structural or behavioral decision must be updated here first.
 2. If code and this file diverge, update this file in the same change set.
 3. Old plan files are historical only; this file defines the active truth.
+
+---
+
+## 9. Code Audit Findings (May 2026)
+
+### **Core Strengths**
+*   **Architecture:** Clean **Worker Thread Pattern** decoupling UI (FLTK), Database (rusqlite), and Backup logic via `crossbeam` channels. UI responsiveness is maintained via non-blocking polling.
+*   **Data Strategy:** Advanced SQLite usage including **FTS5 Full-Text Search**, WAL mode, and triggers for automated index maintenance.
+*   **Patterns:** Robust **Policy Injection** (Traits) for logging and retries, following "Composition Root" principles.
+
+### **Technical Observations**
+*   **Modularity:** Strong separation between UI components and backend workers.
+*   **Reliability:** Mature **Exponential Backoff** implementation for fallible operations.
+*   **Lifecycle:** Explicit shutdown orchestration for clean resource release.
+
+### **Identified Refinements**
+*   **Error Handling:** Move from `String` errors to typed enums (e.g., `thiserror`) for better diagnostic precision.
+*   **Configuration:** Externalize hardcoded database paths and backup intervals.
+*   **Testing:** Expand from policy unit tests to `DbWorker` integration tests.
+
