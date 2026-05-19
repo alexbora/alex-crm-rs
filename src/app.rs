@@ -57,8 +57,7 @@ impl<L: LoggingPolicy, R: RetryPolicy> App<L, R> {
         self.fetch_companies(String::new());
     }
 
-    fn set_status(&self, ui: &mut main_window::MainWindowUi, text: &str) {
-
+    fn set_status(&self, _ui: &mut main_window::MainWindowUi, text: &str) {
         self.logger.log("INFO", text);
     }
 

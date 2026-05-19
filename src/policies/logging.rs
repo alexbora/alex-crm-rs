@@ -7,9 +7,11 @@ use std::sync::Mutex;
 pub trait LoggingPolicy: Send + Sync {
     fn log(&self, level: &str, message: &str);
     fn flush(&self);
+    #[allow(dead_code)]
     fn is_enabled(&self) -> bool;
 }
 
+#[allow(dead_code)]
 pub struct NoLogging;
 
 impl LoggingPolicy for NoLogging {
@@ -47,12 +49,15 @@ impl LoggingPolicy for ConsoleLogger {
     }
 }
 
+#[allow(dead_code)]
 pub struct FileLogger {
     log_dir: PathBuf,
     lock: Mutex<()>,
 }
 
+#[allow(dead_code)]
 impl FileLogger {
+    #[allow(dead_code)]
     pub fn new(log_dir: impl Into<PathBuf>) -> Self {
         let log_dir = log_dir.into();
         let _ = create_dir_all(&log_dir);
@@ -62,6 +67,7 @@ impl FileLogger {
         }
     }
 
+    #[allow(dead_code)]
     fn daily_log_path(&self) -> PathBuf {
         let date = Local::now().format("%Y-%m-%d").to_string();
         self.log_dir.join(format!("{date}.log"))

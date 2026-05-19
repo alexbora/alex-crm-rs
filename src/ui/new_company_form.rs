@@ -1,17 +1,36 @@
 use crate::tasks::{DbTask, InsertCompanyReq};
+use crate::ui::theme;
 use crossbeam::channel::Sender;
-use fltk::{button, dialog, input, prelude::*, window};
+use fltk::{button, dialog, frame, input, prelude::*, window};
 
 pub fn open_new_company_form(db_tx: Sender<DbTask>) -> window::Window {
-    let mut wind = window::Window::new(260, 220, 420, 250, "New Company");
+    let mut wind = window::Window::new(260, 220, 480, 322, "New Company");
+    theme::style_window(&mut wind);
 
-    let name_input = input::Input::new(130, 20, 260, 30, "Name:");
-    let county_input = input::Input::new(130, 60, 260, 30, "County:");
-    let contact_first_input = input::Input::new(130, 100, 260, 30, "Contact First:");
-    let contact_last_input = input::Input::new(130, 140, 260, 30, "Contact Last:");
+    let mut title = frame::Frame::new(28, 24, 220, 28, "New Company");
+    theme::style_section_title(&mut title);
+    let mut help = frame::Frame::new(
+        28,
+        52,
+        420,
+        22,
+        "Create a company record and optionally add a primary contact.",
+    );
+    theme::style_field_hint(&mut help);
 
-    let mut save_button = button::Button::new(210, 190, 80, 32, "Save");
-    let mut cancel_button = button::Button::new(300, 190, 80, 32, "Cancel");
+    let mut name_input = input::Input::new(160, 92, 284, 36, "Name:");
+    theme::style_text_input(&mut name_input);
+    let mut county_input = input::Input::new(160, 138, 284, 36, "County:");
+    theme::style_text_input(&mut county_input);
+    let mut contact_first_input = input::Input::new(160, 184, 284, 36, "Contact First:");
+    theme::style_text_input(&mut contact_first_input);
+    let mut contact_last_input = input::Input::new(160, 230, 284, 36, "Contact Last:");
+    theme::style_text_input(&mut contact_last_input);
+
+    let mut save_button = button::Button::new(244, 274, 96, 36, "Save");
+    theme::style_primary_button(&mut save_button);
+    let mut cancel_button = button::Button::new(348, 274, 96, 36, "Cancel");
+    theme::style_secondary_button(&mut cancel_button);
 
     wind.end();
     wind.make_resizable(true);

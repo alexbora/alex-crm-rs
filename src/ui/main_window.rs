@@ -1,5 +1,6 @@
 use crate::tasks::DbTask;
 use crate::ui::companies_tab::{self, CompaniesTabUi};
+use crate::ui::theme;
 use crossbeam::channel::Sender;
 use fltk::{button, frame, group, input, prelude::*, window};
 
@@ -8,13 +9,13 @@ pub struct MainWindowUi {
     pub companies: CompaniesTabUi,
     pub logs_editor: input::MultilineInput,
     pub logs_status: frame::Frame,
-    pub status_frame: frame::Frame,
+
 }
 
 pub fn build_main_window(db_tx: Sender<DbTask>) -> MainWindowUi {
     let (screen_w, screen_h) = fltk::app::screen_size();
-    let width = 980;
-    let height = 700;
+    let width = 1040;
+    let height = 760;
 
     let mut wind = window::Window::new(
         ((screen_w as i32 - width) / 2).max(20),
@@ -23,30 +24,71 @@ pub fn build_main_window(db_tx: Sender<DbTask>) -> MainWindowUi {
         height,
         "Alex CRM",
     );
+    theme::style_window(&mut wind);
 
     let mut tabs = group::Tabs::new(10, 10, width - 20, height - 65, None);
+    theme::style_tabs(&mut tabs);
 
-    let companies = companies_tab::build_companies_tab(18, 40, width - 36, height - 110, db_tx.clone());
+    let companies =
+        companies_tab::build_companies_tab(18, 42, width - 36, height - 116, db_tx.clone());
 
     {
         let mut contacts_group = group::Group::new(18, 40, width - 36, height - 110, "Contacts");
-        frame::Frame::new(40, 80, 360, 40, "Contacts tab is ready for backend wiring.");
+        theme::style_tab_panel(&mut contacts_group);
+        let mut title = frame::Frame::new(40, 82, 220, 26, "Contacts");
+        theme::style_section_title(&mut title);
+        let mut placeholder = frame::Frame::new(
+            40,
+            126,
+            width - 116,
+            64,
+            "Contacts tab is ready for backend wiring.",
+        );
+        theme::style_placeholder_message(&mut placeholder);
         contacts_group.end();
     }
 
     {
-        let mut activities_group = group::Group::new(18, 40, width - 36, height - 110, "Activities");
-        frame::Frame::new(40, 80, 360, 40, "Activities tab is ready for backend wiring.");
+        let mut activities_group =
+            group::Group::new(18, 40, width - 36, height - 110, "Activities");
+        theme::style_tab_panel(&mut activities_group);
+        let mut title = frame::Frame::new(40, 82, 220, 26, "Activities");
+        theme::style_section_title(&mut title);
+        let mut placeholder = frame::Frame::new(
+            40,
+            126,
+            width - 116,
+            64,
+            "Activities tab is ready for backend wiring.",
+        );
+        theme::style_placeholder_message(&mut placeholder);
         activities_group.end();
     }
 
     let (logs_editor, logs_status) = {
         let mut logs_group = group::Group::new(18, 40, width - 36, height - 110, "Logs");
-        let logs_editor = input::MultilineInput::new(36, 80, width - 72, height - 240, "Daily Log:");
-        let mut save_button = button::Button::new(36, height - 145, 120, 34, "Save Today");
-        let mut reload_button = button::Button::new(166, height - 145, 120, 34, "Reload");
-        let mut backup_button = button::Button::new(296, height - 145, 140, 34, "Request Backup");
-        let logs_status = frame::Frame::new(36, height - 105, width - 72, 28, "");
+        theme::style_tab_panel(&mut logs_group);
+        let mut logs_title = frame::Frame::new(36, 82, 220, 26, "Daily Log");
+        theme::style_section_title(&mut logs_title);
+        let mut logs_hint = frame::Frame::new(
+            36,
+            110,
+            width - 72,
+            22,
+            "Capture what changed today. Entries are saved per day.",
+        );
+        theme::style_field_hint(&mut logs_hint);
+        let mut logs_editor =
+            input::MultilineInput::new(36, 142, width - 72, height - 324, "Entry");
+        theme::style_multiline_input(&mut logs_editor);
+        let mut save_button = button::Button::new(36, height - 155, 136, 36, "Save Today");
+        theme::style_primary_button(&mut save_button);
+        let mut reload_button = button::Button::new(184, height - 155, 120, 36, "Reload");
+        theme::style_secondary_button(&mut reload_button);
+        let mut backup_button = button::Button::new(316, height - 155, 160, 36, "Request Backup");
+        theme::style_secondary_button(&mut backup_button);
+        let mut logs_status = frame::Frame::new(36, height - 109, width - 72, 32, "");
+        theme::style_status_frame(&mut logs_status);
 
         let save_tx = db_tx.clone();
         let save_editor = logs_editor.clone();
@@ -70,7 +112,7 @@ pub fn build_main_window(db_tx: Sender<DbTask>) -> MainWindowUi {
 
     tabs.end();
 
-    let status_frame = frame::Frame::new(16, height - 45, width - 32, 30, "Ready.");
+
     wind.end();
     wind.make_resizable(true);
 
@@ -79,6 +121,6 @@ pub fn build_main_window(db_tx: Sender<DbTask>) -> MainWindowUi {
         companies,
         logs_editor,
         logs_status,
-        status_frame,
+
     }
 }
