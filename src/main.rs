@@ -67,7 +67,7 @@ fn main() {
 }
 
 fn resolve_db_paths() -> (PathBuf, PathBuf) {
-    let data_dir = PathBuf::from("data");
+    let data_dir = PathBuf::from(r"E:\alex-crm-rs\data");
     let _ = std::fs::create_dir_all(&data_dir);
     (
         data_dir.join("notes_app.db"),

@@ -1,0 +1,50 @@
+# Rust build artifacts
+target/
+**/target/
+
+# Native/CMake build outputs
+build/
+build-*/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+compile_commands.json
+.ninja_deps
+.ninja_log
+
+# Database and runtime data
+data/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+
+# Node.js artifacts (if present in subprojects)
+node_modules/
+dist/
+coverage/
+.npm/
+.pnpm-store/
+.yarn/
+.next/
+.nuxt/
+.svelte-kit/
+*.tsbuildinfo
+
+# Logs and temp
+*.log
+tmp/
+temp/
+.cache/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+*~
+*.swp
+*.swo

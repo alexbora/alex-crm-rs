@@ -1,7 +1,7 @@
 use crate::policies::{LoggingPolicy, RetryPolicy};
 use crate::state::AppState;
 use crate::tasks::{DbTask, FetchCompaniesReq, UiTask};
-use crate::ui::{companies_tab, detail_window, main_window};
+use crate::ui::{companies_tab, detail_window, main_window, theme};
 use fltk::prelude::{InputExt, WidgetExt};
 use std::sync::Arc;
 
@@ -21,7 +21,8 @@ impl<L: LoggingPolicy, R: RetryPolicy> App<L, R> {
     }
 
     pub fn run(&self) {
-        let app = fltk::app::App::default().with_scheme(fltk::app::Scheme::Gtk);
+        let app = fltk::app::App::default().with_scheme(fltk::app::Scheme::Base);
+        theme::install();
         let mut ui = main_window::build_main_window(self.state.db_tx.clone());
         ui.window.show();
 
@@ -37,25 +38,27 @@ impl<L: LoggingPolicy, R: RetryPolicy> App<L, R> {
         let req = FetchCompaniesReq {
             search,
             offset: 0,
-            limit: 500,
+            limit: 2_000_000,
         };
         let tx = self.state.db_tx.clone();
-        if let Err(err) = self
-            .retry_policy
-            .attempt(|| tx.send(DbTask::FetchCompanies(req.clone())).map_err(|e| e.to_string()))
-        {
-            self.logger
-                .log("ERROR", &format!("Failed to queue fetch companies task: {err}"));
+        if let Err(err) = self.retry_policy.attempt(|| {
+            tx.send(DbTask::FetchCompanies(req.clone()))
+                .map_err(|e| e.to_string())
+        }) {
+            self.logger.log(
+                "ERROR",
+                &format!("Failed to queue fetch companies task: {err}"),
+            );
         }
     }
 
     fn refresh_companies(&self, ui: &main_window::MainWindowUi) {
-        self.fetch_companies(ui.companies.search_input.value());
+        let _ = ui;
+        self.fetch_companies(String::new());
     }
 
     fn set_status(&self, ui: &mut main_window::MainWindowUi, text: &str) {
-        ui.status_frame.set_label(text);
-        ui.companies.status_frame.set_label(text);
+
         self.logger.log("INFO", text);
     }
 
@@ -64,14 +67,23 @@ impl<L: LoggingPolicy, R: RetryPolicy> App<L, R> {
             match msg {
                 UiTask::FetchCompaniesResult(result) => match result {
                     Ok(data) => {
-                        companies_tab::populate_companies(
-                            &mut ui.companies.browser,
-                            &ui.companies.company_rows,
-                            &data.rows,
-                        );
+companies_tab::handle_companies_result(
+    &mut ui.companies.browser,
+    &ui.companies.all_companies,
+    &ui.companies.company_rows,
+    &data.rows,
+    &ui.companies.search_input.value(),
+    &mut ui.companies.status_frame,
+    ui.companies.total.clone(),
+    ui.companies.offset.clone(),
+);
                         self.set_status(
                             ui,
-                            &format!("Loaded {} companies ({} total).", data.rows.len(), data.total),
+                            &format!(
+                                "Loaded {} companies ({} total).",
+                                data.rows.len(),
+                                data.total
+                            ),
                         );
                     }
                     Err(err) => {
@@ -118,7 +130,9 @@ impl<L: LoggingPolicy, R: RetryPolicy> App<L, R> {
                         ui.logs_editor.set_value("");
                         ui.logs_status.set_label("No daily log yet for today.");
                     }
-                    Err(err) => ui.logs_status.set_label(&format!("Failed to load log: {err}")),
+                    Err(err) => ui
+                        .logs_status
+                        .set_label(&format!("Failed to load log: {err}")),
                 },
                 UiTask::SaveTodayLogResult(result) => match result {
                     Ok(op) => ui.logs_status.set_label(&op.message),
