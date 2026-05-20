@@ -41,7 +41,7 @@ impl<L: LoggingPolicy, R: RetryPolicy> DbWorker<L, R> {
         let conn_result = self
             .retry_policy
             .attempt(|| Connection::open(&self.db_path).map_err(|e| e.to_string()));
-        let conn = match conn_result {
+        let mut conn = match conn_result {
             Ok(conn) => conn,
             Err(err) => {
                 self.logger
@@ -50,7 +50,20 @@ impl<L: LoggingPolicy, R: RetryPolicy> DbWorker<L, R> {
             }
         };
 
-        if let Err(err) = schema::bootstrap_schema(&conn) {
+        // Attempt to load camel_tokenizer extension DLL
+let camel_dll = std::path::Path::new("src/backend/camel_tokenizer/target/x86_64-pc-windows-gnu/release/camel_tokenizer.dll");
+if camel_dll.exists() {
+    let load_result = unsafe { rusqlite::Connection::load_extension(&mut conn, camel_dll, None) };
+    if let Err(err) = load_result {
+        self.logger.log("ERROR", &format!("Failed to load camel_tokenizer.dll: {err}"));
+    } else {
+        self.logger.log("INFO", "Loaded camel_tokenizer.dll successfully");
+    }
+} else {
+    self.logger.log("WARN", "camel_tokenizer.dll not found; camel FTS5 unavailable");
+}
+
+if let Err(err) = schema::bootstrap_schema(&conn) {
             self.logger
                 .log("ERROR", &format!("Schema bootstrap failed: {err}"));
             return;
