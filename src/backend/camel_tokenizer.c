@@ -147,3 +147,14 @@ int sqlite3_camel_init(sqlite3 *db, char **pzErrMsg,
   return ftsApi->xCreateTokenizer(ftsApi, "camel", (void *)ftsApi,
                                   &camelTokenizer, NULL);
 }
+
+#ifdef __cplusplus
+extern "C"
+#endif
+#ifdef _WIN32
+__declspec(dllexport)
+#endif
+int sqlite3_extension_init(sqlite3 *db, char **pzErrMsg, const sqlite3_api_routines *pApi) {
+    return sqlite3_camel_init(db, pzErrMsg, pApi);
+}
+

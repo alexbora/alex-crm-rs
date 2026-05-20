@@ -51,7 +51,7 @@ impl<L: LoggingPolicy, R: RetryPolicy> DbWorker<L, R> {
         };
 
         // Attempt to load camel_tokenizer extension DLL
-let camel_dll = std::path::Path::new("src/backend/camel_tokenizer/target/x86_64-pc-windows-gnu/release/camel_tokenizer.dll");
+let camel_dll = std::path::Path::new("src/backend/camel_tokenizer/camel_tokenizer.dll");
 if camel_dll.exists() {
     let load_result = unsafe { rusqlite::Connection::load_extension(&mut conn, camel_dll, None) };
     if let Err(err) = load_result {
