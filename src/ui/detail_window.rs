@@ -1,7 +1,8 @@
 use crate::tasks::{CompanyDetails, DbTask, UpdateCompanyReq};
+use crate::ui::theme;
 use chrono::{Datelike, Local};
 use crossbeam::channel::Sender;
-use fltk::{button, dialog, input, prelude::*, window};
+use fltk::{button, dialog, frame, input, prelude::*, window};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -39,20 +40,39 @@ pub fn open_detail_window(
         dialog::message_default(&format!("Could not open company folder: {err}"));
     }
 
-    let mut wind = window::Window::new(220, 180, 430, 240, "Company Details");
+    let mut wind = window::Window::new(220, 180, 480, 312, "Company Details");
+    theme::style_window(&mut wind);
 
-    let name_input = input::Input::new(140, 20, 260, 30, "Name:");
-    let county_input = input::Input::new(140, 60, 260, 30, "County:");
-    let contact_first_input = input::Input::new(140, 100, 260, 30, "Contact First:");
-    let contact_last_input = input::Input::new(140, 140, 260, 30, "Contact Last:");
+    let mut title = frame::Frame::new(28, 24, 220, 28, "Company Details");
+    theme::style_section_title(&mut title);
 
-    let mut save_button = button::Button::new(220, 185, 85, 32, "Save");
-    let mut close_button = button::Button::new(315, 185, 85, 32, "Close");
+    let mut help = frame::Frame::new(
+        28,
+        52,
+        420,
+        22,
+        "Update company details and keep the linked contact in sync.",
+    );
+    theme::style_field_hint(&mut help);
+
+    let mut name_input = input::Input::new(160, 92, 284, 36, "Name:");
+    theme::style_text_input(&mut name_input);
+    let mut county_input = input::Input::new(160, 138, 284, 36, "County:");
+    theme::style_text_input(&mut county_input);
+    let mut contact_first_input = input::Input::new(160, 184, 284, 36, "Contact First:");
+    theme::style_text_input(&mut contact_first_input);
+    let mut contact_last_input = input::Input::new(160, 230, 284, 36, "Contact Last:");
+    theme::style_text_input(&mut contact_last_input);
+
+    let mut save_button = button::Button::new(244, 272, 96, 36, "Save");
+    theme::style_primary_button(&mut save_button);
+    let mut close_button = button::Button::new(348, 272, 96, 36, "Close");
+    theme::style_secondary_button(&mut close_button);
 
     wind.end();
     wind.make_resizable(true);
 
-    let mut name_for_save = name_input.clone();
+    let name_for_save = name_input.clone();
     let county_for_save = county_input.clone();
     let contact_first_for_save = contact_first_input.clone();
     let contact_last_for_save = contact_last_input.clone();
@@ -100,7 +120,11 @@ pub fn open_detail_window(
     let _ = db_tx.send(DbTask::FetchCompanyDetails(company_id));
 }
 
-pub fn apply_company_details(windows: &DetailWindowStore, company_id: i64, details: &CompanyDetails) {
+pub fn apply_company_details(
+    windows: &DetailWindowStore,
+    company_id: i64,
+    details: &CompanyDetails,
+) {
     if let Some(handle) = windows.borrow_mut().get_mut(&company_id) {
         handle.name_input.set_value(&details.name);
         handle.county_input.set_value(&details.county);

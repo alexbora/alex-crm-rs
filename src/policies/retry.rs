@@ -7,6 +7,7 @@ pub trait RetryPolicy: Send + Sync {
         F: FnMut() -> Result<T, String>;
 }
 
+#[allow(dead_code)]
 pub struct NoRetry;
 
 impl RetryPolicy for NoRetry {
@@ -18,11 +19,13 @@ impl RetryPolicy for NoRetry {
     }
 }
 
+#[allow(dead_code)]
 pub struct SpinRetry {
     attempts: usize,
 }
 
 impl SpinRetry {
+    #[allow(dead_code)]
     pub fn new(attempts: usize) -> Self {
         Self {
             attempts: attempts.max(1),
@@ -61,6 +64,7 @@ impl ExponentialBackoff {
         }
     }
 
+    #[allow(dead_code)]
     pub fn with_attempts(min_ms: u64, max_ms: u64, max_attempts: usize) -> Self {
         Self {
             min_ms: min_ms.max(1),

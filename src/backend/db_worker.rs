@@ -8,7 +8,7 @@ use crate::tasks::{
 use chrono::Local;
 use crossbeam::channel::{Receiver, Sender};
 use rusqlite::{Connection, OptionalExtension, params};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub struct DbWorker<L: LoggingPolicy, R: RetryPolicy> {
@@ -41,7 +41,7 @@ impl<L: LoggingPolicy, R: RetryPolicy> DbWorker<L, R> {
         let conn_result = self
             .retry_policy
             .attempt(|| Connection::open(&self.db_path).map_err(|e| e.to_string()));
-        let conn = match conn_result {
+        let mut conn = match conn_result {
             Ok(conn) => conn,
             Err(err) => {
                 self.logger
@@ -50,7 +50,46 @@ impl<L: LoggingPolicy, R: RetryPolicy> DbWorker<L, R> {
             }
         };
 
-        if let Err(err) = schema::bootstrap_schema(&conn) {
+        // Attempt to load camel tokenizer from common runtime locations.
+        let camel_candidates = resolve_camel_dll_candidates();
+        let mut camel_loaded = false;
+        for candidate in &camel_candidates {
+            if !candidate.exists() {
+                continue;
+            }
+            let load_result =
+                unsafe { rusqlite::Connection::load_extension(&mut conn, candidate, None) };
+            match load_result {
+                Ok(_) => {
+                    self.logger.log(
+                        "INFO",
+                        &format!(
+                            "Loaded camel tokenizer extension: {}",
+                            candidate.to_string_lossy()
+                        ),
+                    );
+                    camel_loaded = true;
+                    break;
+                }
+                Err(err) => {
+                    self.logger.log(
+                        "ERROR",
+                        &format!(
+                            "Failed loading camel tokenizer from {}: {err}",
+                            candidate.to_string_lossy()
+                        ),
+                    );
+                }
+            }
+        }
+        if !camel_loaded {
+            self.logger.log(
+                "WARN",
+                "camel_tokenizer.dll not found/loaded; camel FTS5 unavailable",
+            );
+        }
+
+if let Err(err) = schema::bootstrap_schema(&conn) {
             self.logger
                 .log("ERROR", &format!("Schema bootstrap failed: {err}"));
             return;
@@ -523,4 +562,21 @@ fn build_fts_query(raw: &str) -> String {
         })
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+fn resolve_camel_dll_candidates() -> Vec<PathBuf> {
+    let mut candidates = Vec::new();
+
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(exe_dir) = exe.parent() {
+            candidates.push(exe_dir.join("camel_tokenizer.dll"));
+        }
+    }
+
+    candidates.push(Path::new("camel_tokenizer.dll").to_path_buf());
+    candidates.push(Path::new("target/x86_64-pc-windows-gnu/debug/camel_tokenizer.dll").to_path_buf());
+    candidates.push(Path::new("target/debug/camel_tokenizer.dll").to_path_buf());
+    candidates.push(Path::new("src/backend/camel_tokenizer/camel_tokenizer.dll").to_path_buf());
+
+    candidates
 }

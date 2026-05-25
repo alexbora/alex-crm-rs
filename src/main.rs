@@ -11,6 +11,7 @@ use backend::db_worker::DbWorker;
 use crossbeam::channel;
 use policies::{ConsoleLogger, ExponentialBackoff, LoggingPolicy};
 use state::AppState;
+use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::thread;
@@ -27,6 +28,10 @@ fn main() {
     let (backup_tx, backup_rx) = channel::bounded::<BackupCommand>(32);
 
     let (source_db, backup_db) = resolve_db_paths();
+    logger.log(
+        "INFO",
+        &format!("Using database: {}", source_db.to_string_lossy()),
+    );
     let backup_source_db = source_db.clone();
     let db_source_db = source_db;
 
@@ -67,10 +72,37 @@ fn main() {
 }
 
 fn resolve_db_paths() -> (PathBuf, PathBuf) {
-    let data_dir = PathBuf::from("data");
+    if let Some(arg_db) = env::args().nth(1) {
+        let source_db = PathBuf::from(arg_db);
+        if let Some(parent) = source_db.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+
+        let backup_db = derive_backup_path(&source_db);
+        return (source_db, backup_db);
+    }
+
+    let data_dir = PathBuf::from(r"E:\alex-crm-rs\data");
     let _ = std::fs::create_dir_all(&data_dir);
     (
         data_dir.join("notes_app.db"),
         data_dir.join("notes_app_backup.db"),
     )
+}
+
+fn derive_backup_path(source_db: &PathBuf) -> PathBuf {
+    let parent = source_db
+        .parent()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
+    let stem = source_db
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("notes_app");
+    let ext = source_db
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("db");
+
+    parent.join(format!("{stem}_backup.{ext}"))
 }
