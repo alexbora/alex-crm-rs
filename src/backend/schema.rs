@@ -45,7 +45,7 @@ pub fn bootstrap_schema(conn: &Connection) -> Result<()> {
             name,
             content='companies',
             content_rowid='id',
-            tokenize = 'porter'
+            tokenize = 'camel'
         );
 
         CREATE TRIGGER IF NOT EXISTS companies_ai AFTER INSERT ON companies BEGIN

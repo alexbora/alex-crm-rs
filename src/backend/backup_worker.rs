@@ -53,7 +53,8 @@ impl<L: LoggingPolicy, R: RetryPolicy> BackupWorker<L, R> {
                     self.perform_with_reporting(&ui_tx, "Scheduled backup completed.");
                 }
                 Err(RecvTimeoutError::Disconnected) => {
-                    self.logger.log("WARN", "Backup command channel disconnected");
+                    self.logger
+                        .log("WARN", "Backup command channel disconnected");
                     break;
                 }
             }

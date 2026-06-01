@@ -244,7 +244,15 @@ pub fn handle_companies_result(
         all.clear();
         all.extend_from_slice(rows);
     }
-    apply_in_memory_filter(browser, company_rows, all_companies, search, total, offset, status_frame);
+    apply_in_memory_filter(
+        browser,
+        company_rows,
+        all_companies,
+        search,
+        total,
+        offset,
+        status_frame,
+    );
 }
 
 #[cfg(test)]
@@ -294,4 +302,3 @@ mod tests {
         assert_eq!(loaded[1].name, "Beta LLC");
     }
 }
-

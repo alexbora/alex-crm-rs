@@ -7,7 +7,7 @@ use crate::tasks::{
 };
 use chrono::Local;
 use crossbeam::channel::{Receiver, Sender};
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{params, Connection, OptionalExtension};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -34,8 +34,22 @@ impl<L: LoggingPolicy, R: RetryPolicy> DbWorker<L, R> {
     }
 
     pub fn run(&self, rx: Receiver<DbTask>, ui_tx: Sender<UiTask>) {
-        if let Some(parent) = self.db_path.parent() {
-            let _ = std::fs::create_dir_all(parent);
+        match self.db_path.parent() {
+            Some(parent) if !parent.as_os_str().is_empty() => {
+                eprintln!("[DEBUG] db_path: {:?}, parent: {:?}", self.db_path, parent);
+                if let Err(e) = std::fs::create_dir_all(parent) {
+                    self.logger.log(
+                        "ERROR",
+                        &format!("Failed to create DB parent dir {:?}: {e}", parent),
+                    );
+                }
+            }
+            _ => {
+                self.logger.log(
+                    "ERROR",
+                    &format!("db_path has no valid parent: {:?}", self.db_path),
+                );
+            }
         }
 
         let conn_result = self
@@ -89,14 +103,15 @@ impl<L: LoggingPolicy, R: RetryPolicy> DbWorker<L, R> {
             );
         }
 
-if let Err(err) = schema::bootstrap_schema(&conn) {
+        if let Err(err) = schema::bootstrap_schema(&conn) {
             self.logger
                 .log("ERROR", &format!("Schema bootstrap failed: {err}"));
             return;
         }
 
         if let Err(err) = schema::apply_pragmas(&conn) {
-            self.logger.log("ERROR", &format!("PRAGMA setup failed: {err}"));
+            self.logger
+                .log("ERROR", &format!("PRAGMA setup failed: {err}"));
             return;
         }
 
@@ -217,7 +232,11 @@ if let Err(err) = schema::bootstrap_schema(&conn) {
         Ok(FetchCompaniesResult { rows, total })
     }
 
-    fn handle_fetch_details(&self, conn: &Connection, company_id: i64) -> Result<CompanyDetails, String> {
+    fn handle_fetch_details(
+        &self,
+        conn: &Connection,
+        company_id: i64,
+    ) -> Result<CompanyDetails, String> {
         let (name, county): (String, Option<String>) = conn
             .query_row(
                 r#"
@@ -385,7 +404,8 @@ if let Err(err) = schema::bootstrap_schema(&conn) {
             });
         }
 
-        if let Err(err) = self.upsert_company_contact(conn, req.id, &req.contact_first, &req.contact_last)
+        if let Err(err) =
+            self.upsert_company_contact(conn, req.id, &req.contact_first, &req.contact_last)
         {
             let _ = conn.execute_batch("ROLLBACK;");
             return Err(err);
@@ -411,7 +431,8 @@ if let Err(err) = schema::bootstrap_schema(&conn) {
             return Err(err.to_string());
         }
 
-        if let Err(err) = conn.execute("DELETE FROM activities WHERE company_id = ?1", [company_id]) {
+        if let Err(err) = conn.execute("DELETE FROM activities WHERE company_id = ?1", [company_id])
+        {
             let _ = conn.execute_batch("ROLLBACK;");
             return Err(err.to_string());
         }
@@ -440,10 +461,7 @@ if let Err(err) = schema::bootstrap_schema(&conn) {
         })
     }
 
-    fn handle_fetch_today_log(
-        &self,
-        conn: &Connection,
-    ) -> Result<Option<DailyLogEntry>, String> {
+    fn handle_fetch_today_log(&self, conn: &Connection) -> Result<Option<DailyLogEntry>, String> {
         let today = Local::now().format("%Y-%m-%d").to_string();
         let log = conn
             .query_row(
@@ -574,7 +592,8 @@ fn resolve_camel_dll_candidates() -> Vec<PathBuf> {
     }
 
     candidates.push(Path::new("camel_tokenizer.dll").to_path_buf());
-    candidates.push(Path::new("target/x86_64-pc-windows-gnu/debug/camel_tokenizer.dll").to_path_buf());
+    candidates
+        .push(Path::new("target/x86_64-pc-windows-gnu/debug/camel_tokenizer.dll").to_path_buf());
     candidates.push(Path::new("target/debug/camel_tokenizer.dll").to_path_buf());
     candidates.push(Path::new("src/backend/camel_tokenizer/camel_tokenizer.dll").to_path_buf());
 

@@ -9,7 +9,6 @@ pub struct MainWindowUi {
     pub companies: CompaniesTabUi,
     pub logs_editor: input::MultilineInput,
     pub logs_status: frame::Frame,
-
 }
 
 pub fn build_main_window(db_tx: Sender<DbTask>) -> MainWindowUi {
@@ -112,7 +111,6 @@ pub fn build_main_window(db_tx: Sender<DbTask>) -> MainWindowUi {
 
     tabs.end();
 
-
     wind.end();
     wind.make_resizable(true);
 
@@ -121,6 +119,5 @@ pub fn build_main_window(db_tx: Sender<DbTask>) -> MainWindowUi {
         companies,
         logs_editor,
         logs_status,
-
     }
 }

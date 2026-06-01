@@ -66,16 +66,16 @@ impl<L: LoggingPolicy, R: RetryPolicy> App<L, R> {
             match msg {
                 UiTask::FetchCompaniesResult(result) => match result {
                     Ok(data) => {
-companies_tab::handle_companies_result(
-    &mut ui.companies.browser,
-    &ui.companies.all_companies,
-    &ui.companies.company_rows,
-    &data.rows,
-    &ui.companies.search_input.value(),
-    &mut ui.companies.status_frame,
-    ui.companies.total.clone(),
-    ui.companies.offset.clone(),
-);
+                        companies_tab::handle_companies_result(
+                            &mut ui.companies.browser,
+                            &ui.companies.all_companies,
+                            &ui.companies.company_rows,
+                            &data.rows,
+                            &ui.companies.search_input.value(),
+                            &mut ui.companies.status_frame,
+                            ui.companies.total.clone(),
+                            ui.companies.offset.clone(),
+                        );
                         self.set_status(
                             ui,
                             &format!(
